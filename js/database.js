@@ -4,6 +4,7 @@
 class DatabaseManager {
     constructor() {
         this.db = null;
+        this.SQL = null;
         this.isInitialized = false;
         this.init();
     }
@@ -11,12 +12,32 @@ class DatabaseManager {
     async init() {
         try {
             // Initialize SQL.js
-            const SQL = await initSqlJs({
+            this.SQL = await initSqlJs({
                 locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
             });
 
-            // Create a new database
-            this.db = new SQL.Database();
+            // Try to load existing database file
+            let dbData = null;
+            try {
+                const response = await fetch('database/tools.db');
+                if (response.ok) {
+                    const arrayBuffer = await response.arrayBuffer();
+                    dbData = new Uint8Array(arrayBuffer);
+                    console.log('Loaded existing database file');
+                }
+            } catch (error) {
+                console.log('No existing database file found, creating new one');
+            }
+
+            // Create database from file or new
+            if (dbData && dbData.length > 0) {
+                this.db = new this.SQL.Database(dbData);
+                console.log('Database loaded from file');
+            } else {
+                this.db = new this.SQL.Database();
+                console.log('Created new database');
+            }
+
             this.isInitialized = true;
 
             // Create initial tables
@@ -99,6 +120,8 @@ class DatabaseManager {
 
             // Log query to history
             this.logQuery(sql, result[0]?.values?.length || 0, executionTime);
+
+            // Auto-save disabled - user will save manually
 
             return {
                 success: true,
@@ -231,11 +254,25 @@ class DatabaseManager {
     // Import database from SQL dump
     importDatabase(data) {
         try {
-            this.db = new SQL.Database(data);
+            console.log('DatabaseManager: Starting import...');
+            console.log('Data type:', typeof data);
+            console.log('Data length:', data.length);
+            console.log('Data constructor:', data.constructor.name);
+            console.log('SQL available:', this.SQL !== null);
+
+            if (!this.SQL) {
+                console.error('DatabaseManager: SQL.js not loaded');
+                return false;
+            }
+
+            this.db = new this.SQL.Database(data);
             this.isInitialized = true;
+
+            console.log('DatabaseManager: Import successful');
             return true;
         } catch (error) {
-            console.error('Error importing database:', error);
+            console.error('DatabaseManager: Error importing database:', error);
+            console.error('Error details:', error.message);
             return false;
         }
     }
@@ -274,7 +311,39 @@ class DatabaseManager {
     isReady() {
         return this.isInitialized && this.db !== null;
     }
+
+    saveToFile() {
+        if (!this.db) return;
+
+        try {
+            const data = this.db.export();
+            const blob = new Blob([data], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+
+            // Create a temporary download link
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'tools.db';
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            console.log('Database saved to file - please place it in the database/ folder');
+
+            // Show notification to user
+            if (window.toolsApp) {
+                window.toolsApp.showNotification('Database saved! Place the downloaded file in the database/ folder.', 'info');
+            }
+        } catch (error) {
+            console.error('Failed to save database:', error);
+        }
+    }
+
+    // Auto-save functionality removed - user saves manually
 }
 
 // Create global database manager instance
 const dbManager = new DatabaseManager();
+window.dbManager = dbManager;

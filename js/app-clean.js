@@ -18,19 +18,19 @@ class ToolsApp {
         // Home page
         router.register('home', () => this.getHomePage());
 
-        // Tool pages - direct calls to tool instances
-        router.register('text-case', () => this.getToolPage('textCaseTool'));
-        router.register('conversion', () => this.getToolPage('conversionTool'));
-        router.register('text-counter', () => this.getToolPage('textCounterTool'));
-        router.register('json-formatter', () => this.getToolPage('jsonFormatterTool'));
-        router.register('color-picker', () => this.getToolPage('colorPickerTool'));
-        router.register('base64', () => this.getToolPage('base64Tool'));
-        router.register('url-encoder', () => this.getToolPage('urlEncoderTool'));
-        router.register('regex-tester', () => this.getToolPage('regexTesterTool'));
-        router.register('hash-generator', () => this.getToolPage('hashGeneratorTool'));
-        router.register('sql-query', () => this.getToolPage('sqlQueryTool'));
-        router.register('db-manager', () => this.getToolPage('dbManagerTool'));
-        router.register('db-backup', () => this.getToolPage('dbBackupTool'));
+        // Dynamic tool pages using tool loader
+        router.register('text-case', () => toolLoader.getToolPage('text-case'));
+        router.register('conversion', () => toolLoader.getToolPage('conversion'));
+        router.register('text-counter', () => toolLoader.getToolPage('text-counter'));
+        router.register('json-formatter', () => toolLoader.getToolPage('json-formatter'));
+        router.register('color-picker', () => toolLoader.getToolPage('color-picker'));
+        router.register('base64', () => toolLoader.getToolPage('base64'));
+        router.register('url-encoder', () => toolLoader.getToolPage('url-encoder'));
+        router.register('regex-tester', () => toolLoader.getToolPage('regex-tester'));
+        router.register('hash-generator', () => toolLoader.getToolPage('hash-generator'));
+        router.register('sql-query', () => toolLoader.getToolPage('sql-query'));
+        router.register('db-manager', () => toolLoader.getToolPage('db-manager'));
+        router.register('db-backup', () => toolLoader.getToolPage('db-backup'));
 
         // 404 page
         router.register('404', () => this.get404Page());
@@ -44,26 +44,6 @@ class ToolsApp {
         this.initializeTools();
 
         console.log('Tools App initialized successfully');
-    }
-
-    getToolPage(toolVarName) {
-        const tool = window[toolVarName];
-        if (!tool) {
-            console.error(`Tool not found: ${toolVarName}`);
-            return this.get404Page();
-        }
-
-        // Initialize the tool if it has an initialize method
-        if (typeof tool.initialize === 'function') {
-            setTimeout(() => tool.initialize(), 100);
-        }
-
-        // Special handling for database manager to refresh info
-        if (toolVarName === 'dbManagerTool' && typeof tool.refreshDatabaseInfo === 'function') {
-            setTimeout(() => tool.refreshDatabaseInfo(), 200);
-        }
-
-        return tool.getPageHTML();
     }
 
     setupGlobalEventListeners() {
@@ -152,34 +132,19 @@ class ToolsApp {
         notification.innerHTML = `
             <i class="${icons[type] || icons.info}"></i>
             <span>${message}</span>
-            <button class="btn btn-sm btn-ghost ml-auto" onclick="this.parentElement.remove()">×</button>
         `;
 
         container.appendChild(notification);
 
-        // Trigger animation
+        // Remove notification after 3 seconds
         setTimeout(() => {
-            notification.classList.add('notification-enter-active');
-        }, 10);
-
-        // Log to console for debugging
-        console.log(`Notification [${type.toUpperCase()}]:`, message);
-
-        // Different timeout based on type
-        const timeout = type === 'error' ? 10000 : (type === 'warning' ? 7000 : 5000);
-
-        // Remove notification after timeout
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.classList.add('notification-exit');
-                notification.classList.add('notification-exit-active');
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 300);
-            }
-        }, timeout);
+            notification.classList.add('notification-exit');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
     }
 
     // Page components

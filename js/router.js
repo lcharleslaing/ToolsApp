@@ -131,19 +131,7 @@ class Router {
     // Initialize page-specific content
     initializePageContent(pageName) {
         console.log('Initializing page content for:', pageName);
-
-        // Initialize text case converter if on that page
-        if (pageName === 'text-case') {
-            const textInput = document.getElementById('text-input');
-            console.log('Text input element found:', textInput);
-            console.log('Tools app available:', !!window.toolsApp);
-
-            if (textInput && window.toolsApp) {
-                console.log('Converting initial text:', textInput.value);
-                // Convert the initial sample text
-                window.toolsApp.convertTextCase(textInput.value);
-            }
-        }
+        // Page-specific initialization is now handled by individual tool files
     }
 
     // Get 404 page
