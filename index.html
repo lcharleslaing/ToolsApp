@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lee's Tools App</title>
+
+    <!-- TailwindCSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- DaisyUI CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.min.css" rel="stylesheet" type="text/css" />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles/main.css">
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- SQL.js for SQLite support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+</head>
+
+<body class="bg-base-100">
+    <!-- Navigation Sidebar -->
+    <div class="drawer lg:drawer-open">
+        <input id="drawer-toggle" type="checkbox" class="drawer-toggle" />
+
+        <!-- Page content -->
+        <div class="drawer-content flex flex-col">
+            <!-- Navbar -->
+            <div class="navbar bg-base-200 lg:hidden">
+                <div class="flex-none">
+                    <label for="drawer-toggle" class="btn btn-square btn-ghost">
+                        <i class="fas fa-bars"></i>
+                    </label>
+                </div>
+                <div class="flex-1">
+                    <a class="btn btn-ghost text-xl">Tools App</a>
+                </div>
+            </div>
+
+            <!-- Main content area -->
+            <main class="flex-1 p-6">
+                <div id="page-content" class="min-h-screen">
+                    <!-- Content will be dynamically loaded here -->
+                </div>
+            </main>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="drawer-side">
+            <label for="drawer-toggle" aria-label="close sidebar" class="drawer-overlay"></label>
+            <aside class="min-h-full w-80 bg-base-200">
+                <!-- Sidebar header -->
+                <div class="p-4 border-b border-base-300">
+                    <h1 class="text-2xl font-bold text-primary">Tools App</h1>
+                    <p class="text-sm text-base-content/70">Collection of useful tools</p>
+                </div>
+
+                <!-- Navigation menu -->
+                <nav class="p-4">
+                    <ul class="menu menu-vertical w-full">
+                        <li><a href="#home" class="nav-link active" data-page="home">
+                                <i class="fas fa-home"></i>
+                                Home
+                            </a></li>
+
+                        <!-- Tools Categories -->
+                        <li class="menu-title">
+                            <span>Text Tools</span>
+                        </li>
+                        <li><a href="#text-case" class="nav-link" data-page="text-case">
+                                <i class="fas fa-text-height"></i>
+                                Text Case Converter
+                            </a></li>
+                        <li><a href="#text-counter" class="nav-link" data-page="text-counter">
+                                <i class="fas fa-calculator"></i>
+                                Text Counter
+                            </a></li>
+                        <li><a href="#json-formatter" class="nav-link" data-page="json-formatter">
+                                <i class="fas fa-code"></i>
+                                JSON Formatter
+                            </a></li>
+
+                        <li class="menu-title">
+                            <span>Utility Tools</span>
+                        </li>
+                        <li><a href="#color-picker" class="nav-link" data-page="color-picker">
+                                <i class="fas fa-palette"></i>
+                                Color Picker
+                            </a></li>
+                        <li><a href="#base64" class="nav-link" data-page="base64">
+                                <i class="fas fa-key"></i>
+                                Base64 Encoder/Decoder
+                            </a></li>
+                        <li><a href="#url-encoder" class="nav-link" data-page="url-encoder">
+                                <i class="fas fa-link"></i>
+                                URL Encoder/Decoder
+                            </a></li>
+
+                        <li class="menu-title">
+                            <span>Development</span>
+                        </li>
+                        <li><a href="#regex-tester" class="nav-link" data-page="regex-tester">
+                                <i class="fas fa-search"></i>
+                                Regex Tester
+                            </a></li>
+                        <li><a href="#hash-generator" class="nav-link" data-page="hash-generator">
+                                <i class="fas fa-fingerprint"></i>
+                                Hash Generator
+                            </a></li>
+
+                        <li class="menu-title">
+                            <span>Database</span>
+                        </li>
+                        <li><a href="#sql-query" class="nav-link" data-page="sql-query">
+                                <i class="fas fa-database"></i>
+                                SQL Query Runner
+                            </a></li>
+                        <li><a href="#db-manager" class="nav-link" data-page="db-manager">
+                                <i class="fas fa-table"></i>
+                                Database Manager
+                            </a></li>
+                        <li><a href="#db-backup" class="nav-link" data-page="db-backup">
+                                <i class="fas fa-download"></i>
+                                Backup & Restore
+                            </a></li>
+                    </ul>
+                </nav>
+
+                <!-- Theme toggle -->
+                <div class="p-4 border-t border-base-300 mt-auto">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm">Theme</span>
+                        <button id="theme-toggle" class="btn btn-sm btn-outline">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/router.js"></script>
+    <script src="js/theme.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
