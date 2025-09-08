@@ -224,6 +224,14 @@ class ConversionTool {
                                         ${this.getUnitOptions()}
                                     </select>
                                 </div>
+                                <div class="form-control mt-4">
+                                    <label class="label">
+                                        <span class="label-text">To Unit</span>
+                                    </label>
+                                    <select id="conversion-to-unit" class="select select-bordered conversion-unit">
+                                        ${this.getUnitOptions()}
+                                    </select>
+                                </div>
                                 <div class="card-actions justify-between mt-4">
                                     <button class="btn btn-outline btn-sm" onclick="conversionTool.clearInputs()">
                                         Clear
@@ -238,9 +246,17 @@ class ConversionTool {
                         <!-- Output Section -->
                         <div class="card bg-base-100 shadow-xl">
                             <div class="card-body">
-                                <h2 class="card-title">Output</h2>
-                                <div class="space-y-4" id="conversion-outputs">
-                                    <!-- Output fields will be generated here -->
+                                <h2 class="card-title">Result</h2>
+                                <div class="form-control">
+                                    <label class="label">
+                                        <span class="label-text">Converted Value</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="text" id="conversion-result" class="input input-bordered flex-1" readonly />
+                                        <button class="btn btn-primary copy-btn" data-copy="document.getElementById('conversion-result').value">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -283,49 +299,32 @@ class ConversionTool {
 
     updateUnitSelects() {
         const fromSelect = document.getElementById('conversion-from-unit');
+        const toSelect = document.getElementById('conversion-to-unit');
         if (fromSelect) {
             fromSelect.innerHTML = this.getUnitOptions();
         }
-        this.updateOutputFields();
+        if (toSelect) {
+            toSelect.innerHTML = this.getUnitOptions();
+        }
     }
 
-    updateOutputFields() {
-        const outputsContainer = document.getElementById('conversion-outputs');
-        if (!outputsContainer) return;
-
-        const category = this.categories[this.currentCategory];
-        const units = Object.entries(category.units);
-
-        outputsContainer.innerHTML = units.map(([key, unit]) => `
-            <div class="form-control">
-                <label class="label">
-                    <span class="label-text">${unit.name} (${key})</span>
-                </label>
-                <div class="input-group">
-                    <input type="text" class="input input-bordered flex-1 conversion-output" 
-                           id="output-${key}" readonly />
-                    <button class="btn btn-primary copy-btn" data-copy="document.getElementById('output-${key}').value">
-                        <i class="fas fa-copy"></i>
-                    </button>
-                </div>
-            </div>
-        `).join('');
-    }
 
     convertAll() {
         const inputValue = document.getElementById('conversion-input')?.value;
         const fromUnit = document.getElementById('conversion-from-unit')?.value;
+        const toUnit = document.getElementById('conversion-to-unit')?.value;
 
-        if (!inputValue || !fromUnit) return;
+        if (!inputValue || !fromUnit || !toUnit) return;
 
         const category = this.categories[this.currentCategory];
         const fromUnitData = category.units[fromUnit];
+        const toUnitData = category.units[toUnit];
 
-        if (!fromUnitData) return;
+        if (!fromUnitData || !toUnitData) return;
 
         // Handle special time format conversions
         if (this.currentCategory === 'time') {
-            this.handleTimeConversions(inputValue, fromUnit, category);
+            this.handleTimeConversions(inputValue, fromUnit, toUnit, category);
             return;
         }
 
@@ -341,23 +340,22 @@ class ConversionTool {
             baseValue = numericValue * fromUnitData.factor;
         }
 
-        // Convert from base unit to all other units
-        Object.entries(category.units).forEach(([key, unit]) => {
-            const outputElement = document.getElementById(`output-${key}`);
-            if (outputElement) {
-                let convertedValue;
-                if (this.currentCategory === 'temperature') {
-                    convertedValue = this.convertTemperatureFromCelsius(baseValue, key);
-                } else {
-                    convertedValue = baseValue / unit.factor;
-                }
+        // Convert from base unit to target unit
+        let convertedValue;
+        if (this.currentCategory === 'temperature') {
+            convertedValue = this.convertTemperatureFromCelsius(baseValue, toUnit);
+        } else {
+            convertedValue = baseValue / toUnitData.factor;
+        }
 
-                outputElement.value = this.formatNumber(convertedValue);
-            }
-        });
+        // Display the result
+        const resultElement = document.getElementById('conversion-result');
+        if (resultElement) {
+            resultElement.value = this.formatNumber(convertedValue);
+        }
 
         // Add to history
-        this.addToHistory(numericValue, fromUnit, category.name);
+        this.addToHistory(numericValue, fromUnit, toUnit, category.name);
     }
 
     convertTemperatureToCelsius(value, fromUnit) {
@@ -380,7 +378,7 @@ class ConversionTool {
         }
     }
 
-    handleTimeConversions(inputValue, fromUnit, category) {
+    handleTimeConversions(inputValue, fromUnit, toUnit, category) {
         // Check if input is in HH:MM format
         const timeFormatRegex = /^(\d{1,2}):(\d{2})$/;
         const timeMatch = inputValue.match(timeFormatRegex);
@@ -399,35 +397,35 @@ class ConversionTool {
             baseValue = numericValue * category.units[fromUnit].factor / 3600; // Convert to hours
         }
 
-        // Convert from hours to all other units
-        Object.entries(category.units).forEach(([key, unit]) => {
-            const outputElement = document.getElementById(`output-${key}`);
-            if (outputElement) {
-                let convertedValue;
+        // Convert from hours to target unit
+        let convertedValue;
+        const toUnitData = category.units[toUnit];
 
-                if (key === 'decimal') {
-                    // Special case for decimal hours
-                    convertedValue = baseValue;
-                } else if (key === 'h' && timeMatch) {
-                    // Convert decimal hours back to HH:MM format
-                    const hours = Math.floor(baseValue);
-                    const minutes = Math.round((baseValue - hours) * 60);
-                    convertedValue = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-                } else {
-                    // Regular conversion
-                    convertedValue = baseValue * 3600 / unit.factor; // Convert from hours to target unit
-                }
+        if (toUnit === 'decimal') {
+            // Special case for decimal hours
+            convertedValue = baseValue;
+        } else if (toUnit === 'h' && timeMatch) {
+            // Convert decimal hours back to HH:MM format
+            const hours = Math.floor(baseValue);
+            const minutes = Math.round((baseValue - hours) * 60);
+            convertedValue = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        } else {
+            // Regular conversion
+            convertedValue = baseValue * 3600 / toUnitData.factor; // Convert from hours to target unit
+        }
 
-                if (key === 'h' && timeMatch) {
-                    outputElement.value = convertedValue; // Don't format time strings
-                } else {
-                    outputElement.value = this.formatNumber(convertedValue);
-                }
+        // Display the result
+        const resultElement = document.getElementById('conversion-result');
+        if (resultElement) {
+            if (toUnit === 'h' && timeMatch) {
+                resultElement.value = convertedValue; // Don't format time strings
+            } else {
+                resultElement.value = this.formatNumber(convertedValue);
             }
-        });
+        }
 
         // Add to history
-        this.addToHistory(inputValue, fromUnit, category.name);
+        this.addToHistory(inputValue, fromUnit, toUnit, category.name);
     }
 
     formatNumber(num) {
@@ -443,8 +441,8 @@ class ConversionTool {
         const input = document.getElementById('conversion-input');
         if (input) input.value = '';
 
-        const outputs = document.querySelectorAll('.conversion-output');
-        outputs.forEach(output => output.value = '');
+        const result = document.getElementById('conversion-result');
+        if (result) result.value = '';
     }
 
     switchCategory(category) {
@@ -476,12 +474,13 @@ class ConversionTool {
         console.log('Conversion tool initialized');
     }
 
-    addToHistory(value, fromUnit, categoryName) {
+    addToHistory(value, fromUnit, toUnit, categoryName) {
         const history = this.getHistory();
         const entry = {
             id: Date.now(),
             value: value,
             fromUnit: fromUnit,
+            toUnit: toUnit,
             category: categoryName,
             timestamp: new Date().toISOString()
         };
@@ -514,6 +513,7 @@ class ConversionTool {
                 <div class="flex justify-between items-center">
                     <div>
                         <span class="font-bold">${entry.value} ${entry.fromUnit}</span>
+                        <span class="text-sm text-base-content/70">→ ${entry.toUnit || 'N/A'}</span>
                         <span class="text-sm text-base-content/70">in ${entry.category}</span>
                     </div>
                     <div class="text-xs text-base-content/50">
