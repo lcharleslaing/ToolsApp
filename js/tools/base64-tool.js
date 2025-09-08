@@ -110,7 +110,7 @@ class Base64Tool {
     switchTab(tab) {
         // Update tab buttons
         document.querySelectorAll('.base64-tab').forEach(t => t.classList.remove('tab-active'));
-        event.target.classList.add('tab-active');
+        document.querySelector(`[data-tab="${tab}"]`).classList.add('tab-active');
 
         // Show/hide content
         document.getElementById('encode-tab').classList.toggle('hidden', tab !== 'encode');
@@ -142,7 +142,10 @@ class Base64Tool {
     }
 
     initialize() {
-        // No initialization needed
+        console.log('Initializing Base64 tool...');
+        // Ensure the encode tab is active by default
+        this.switchTab('encode');
+        console.log('Base64 tool initialized');
     }
 }
 

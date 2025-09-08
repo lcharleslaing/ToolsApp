@@ -18,6 +18,13 @@ class ColorPickerTool {
                 this.updateColorValues(e.target.value);
             }
         });
+
+        // Copy buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('copy-btn')) {
+                this.copyToClipboard(e.target);
+            }
+        });
     }
 
     getPageHTML() {
@@ -29,7 +36,7 @@ class ColorPickerTool {
                         Color Picker & Converter
                     </h1>
                     
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="max-w-2xl mx-auto">
                         <div class="card bg-base-100 shadow-xl">
                             <div class="card-body">
                                 <h2 class="card-title">Color Picker</h2>
@@ -37,7 +44,13 @@ class ColorPickerTool {
                                     <label class="label">
                                         <span class="label-text">Choose a color</span>
                                     </label>
-                                    <input type="color" id="color-picker" class="input input-bordered h-16" value="#3b82f6" />
+                                    <div class="flex items-center gap-4">
+                                        <input type="color" id="color-picker" class="w-20 h-20 rounded-lg border-2 border-base-300 cursor-pointer" value="#3b82f6" />
+                                        <div class="flex-1">
+                                            <div class="text-sm text-base-content/70 mb-2">Selection Preview</div>
+                                            <div id="current-color-preview" class="w-full h-12 rounded-lg border-2 border-base-300"></div>
+                                        </div>
+                                    </div>
                                 </div>
                                 
                                 <div class="mt-6 space-y-4">
@@ -45,39 +58,35 @@ class ColorPickerTool {
                                         <label class="label">
                                             <span class="label-text">HEX</span>
                                         </label>
-                                        <input type="text" id="hex-value" class="input input-bordered" readonly />
+                                        <div class="input-group">
+                                            <input type="text" id="hex-value" class="input input-bordered flex-1" readonly />
+                                            <button class="btn btn-primary btn-sm copy-btn w-12 h-12 p-0 ml-2" data-copy-target="hex-value" id="hex-swatch">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                     <div class="form-control">
                                         <label class="label">
                                             <span class="label-text">RGB</span>
                                         </label>
-                                        <input type="text" id="rgb-value" class="input input-bordered" readonly />
+                                        <div class="input-group">
+                                            <input type="text" id="rgb-value" class="input input-bordered flex-1" readonly />
+                                            <button class="btn btn-secondary btn-sm copy-btn w-12 h-12 p-0 ml-2" data-copy-target="rgb-value" id="rgb-swatch">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                     <div class="form-control">
                                         <label class="label">
                                             <span class="label-text">HSL</span>
                                         </label>
-                                        <input type="text" id="hsl-value" class="input input-bordered" readonly />
+                                        <div class="input-group">
+                                            <input type="text" id="hsl-value" class="input input-bordered flex-1" readonly />
+                                            <button class="btn btn-accent btn-sm copy-btn w-12 h-12 p-0 ml-2" data-copy-target="hsl-value" id="hsl-swatch">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="card bg-base-100 shadow-xl">
-                            <div class="card-body">
-                                <h2 class="card-title">Color Preview</h2>
-                                <div id="color-preview" class="w-full h-32 rounded-lg border-2 border-base-300 mb-4"></div>
-                                
-                                <div class="space-y-2">
-                                    <button class="btn btn-primary btn-sm copy-btn w-full" data-copy="document.getElementById('hex-value').value">
-                                        Copy HEX
-                                    </button>
-                                    <button class="btn btn-secondary btn-sm copy-btn w-full" data-copy="document.getElementById('rgb-value').value">
-                                        Copy RGB
-                                    </button>
-                                    <button class="btn btn-accent btn-sm copy-btn w-full" data-copy="document.getElementById('hsl-value').value">
-                                        Copy HSL
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -88,9 +97,9 @@ class ColorPickerTool {
     }
 
     updateColorValues(hex) {
-        // Update preview
-        const preview = document.getElementById('color-preview');
-        if (preview) preview.style.backgroundColor = hex;
+        // Update selection preview
+        const currentPreview = document.getElementById('current-color-preview');
+        if (currentPreview) currentPreview.style.backgroundColor = hex;
 
         // Convert to RGB
         const r = parseInt(hex.slice(1, 3), 16);
@@ -108,6 +117,16 @@ class ColorPickerTool {
         const hsl = this.rgbToHsl(r, g, b);
         const hslValue = document.getElementById('hsl-value');
         if (hslValue) hslValue.value = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
+
+        // Update color swatches (now the copy buttons)
+        const hexSwatch = document.getElementById('hex-swatch');
+        if (hexSwatch) hexSwatch.style.backgroundColor = hex;
+
+        const rgbSwatch = document.getElementById('rgb-swatch');
+        if (rgbSwatch) rgbSwatch.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+
+        const hslSwatch = document.getElementById('hsl-swatch');
+        if (hslSwatch) hslSwatch.style.backgroundColor = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
     }
 
     rgbToHsl(r, g, b) {
@@ -140,9 +159,49 @@ class ColorPickerTool {
         };
     }
 
+    copyToClipboard(button) {
+        const targetId = button.getAttribute('data-copy-target');
+        const targetElement = document.getElementById(targetId);
+
+        if (targetElement && targetElement.value) {
+            navigator.clipboard.writeText(targetElement.value).then(() => {
+                // Show success feedback
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                button.classList.add('btn-success');
+                button.classList.remove('btn-primary', 'btn-secondary', 'btn-accent');
+
+                // Reset after 2 seconds
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.classList.remove('btn-success');
+                    if (targetId === 'hex-value') {
+                        button.classList.add('btn-primary');
+                    } else if (targetId === 'rgb-value') {
+                        button.classList.add('btn-secondary');
+                    } else if (targetId === 'hsl-value') {
+                        button.classList.add('btn-accent');
+                    }
+                }, 2000);
+
+                // Show notification
+                if (window.toolsApp) {
+                    window.toolsApp.showNotification(`${targetId.toUpperCase()} value copied to clipboard!`, 'success');
+                }
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                if (window.toolsApp) {
+                    window.toolsApp.showNotification('Failed to copy to clipboard', 'error');
+                }
+            });
+        }
+    }
+
     initialize() {
+        console.log('Initializing Color Picker tool...');
         // Initialize with default color
         this.updateColorValues('#3b82f6');
+        console.log('Color Picker tool initialized');
     }
 }
 

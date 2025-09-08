@@ -110,7 +110,7 @@ class UrlEncoderTool {
     switchTab(tab) {
         // Update tab buttons
         document.querySelectorAll('.url-tab').forEach(t => t.classList.remove('tab-active'));
-        event.target.classList.add('tab-active');
+        document.querySelector(`[data-tab="${tab}"]`).classList.add('tab-active');
 
         // Show/hide content
         document.getElementById('url-encode-tab').classList.toggle('hidden', tab !== 'encode');
@@ -142,7 +142,10 @@ class UrlEncoderTool {
     }
 
     initialize() {
-        // No initialization needed
+        console.log('Initializing URL Encoder tool...');
+        // Ensure the encode tab is active by default
+        this.switchTab('encode');
+        console.log('URL Encoder tool initialized');
     }
 }
 
